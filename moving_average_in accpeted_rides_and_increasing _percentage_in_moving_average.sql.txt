@@ -1,0 +1,54 @@
+WITH T1 AS (
+  SELECT 
+    DATE(accept_ts) AS request_date, 
+    COUNT(DISTINCT driver_id) AS CNT 
+  FROM 
+    ride_requests 
+  WHERE 
+    EXTRACT(
+      HOUR 
+      FROM 
+        request_ts
+    ) IN (8, 9, 16, 17, 18, 19) 
+    AND EXTRACT(
+      YEAR 
+      FROM 
+        request_ts
+    ) = 2021 
+    AND driver_id IS NOT NULL 
+  GROUP BY 
+    DATE(accept_ts)
+), 
+T2 AS(
+  SELECT 
+    request_date, 
+    ROUND(
+      AVG(CNT) OVER (
+        ORDER BY 
+          request_date ROWS BETWEEN 6 PRECEDING 
+          AND CURRENT ROW
+      ), 
+      2
+    ) AS moving_average 
+  FROM 
+    T1
+) 
+SELECT 
+  T2.*, 
+  CASE WHEN lag(moving_average) OVER(
+    ORDER BY 
+      moving_average
+  ) IS NULL THEN 0 ELSE ROUND(
+    (
+      moving_average - lag(moving_average) OVER(
+        ORDER BY 
+          moving_average
+      )
+    )/ lag(moving_average) OVER(
+      ORDER BY 
+        moving_average
+    ) * 100, 
+    2
+  ) END AS increase_percentage_in_moving_average 
+FROM 
+  T2
