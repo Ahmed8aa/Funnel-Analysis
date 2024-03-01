@@ -1,0 +1,37 @@
+--/ identifying fluctuations in prices and ride_time for same dropoff and pickup locations drives
+WITH T1 AS(
+  SELECT 
+    pickup_location, 
+    dropoff_location, 
+    STDDEV_POP(purchase_amount_usd) AS purchase_amount_STD, 
+    ROUND(
+      STDDEV_POP(
+        EXTRACT(
+          EPOCH 
+          FROM 
+            (dropoff_ts - pickup_ts)
+        )
+      )/ 60
+    ) ride_time_minutes_STD 
+  FROM 
+    metrocar 
+  WHERE 
+    EXTRACT(
+      YEAR 
+      FROM 
+        request_ts
+    ) = '2021' 
+    AND dropoff_ts IS NOT NULL 
+    AND purchase_amount_usd IS NOT NULL 
+  GROUP BY 
+    1, 
+    2
+) 
+SELECT 
+  * 
+FROM 
+  T1 
+WHERE 
+  purchase_amount_STD IS NOT NULL 
+ORDER BY 
+  purchase_amount_STD DESC
