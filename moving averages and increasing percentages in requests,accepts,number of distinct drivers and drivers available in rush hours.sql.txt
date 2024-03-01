@@ -1,0 +1,154 @@
+WITH T1 AS (
+  SELECT 
+    DATE(request_ts) AS request_date, 
+    COUNT(request_ts) AS CNT_request, 
+    COUNT(accept_ts) AS CNT_accept, 
+    COUNT(DISTINCT driver_id) AS CNT_distinct_driver, 
+    COUNT(driver_id) AS CNT_drivers 
+  FROM 
+    ride_requests 
+  WHERE 
+    EXTRACT(
+      HOUR 
+      FROM 
+        request_ts
+    ) IN (8, 9, 16, 17, 18, 19) 
+    AND EXTRACT(
+      YEAR 
+      FROM 
+        request_ts
+    ) = 2021 
+    AND request_ts IS NOT NULL 
+  GROUP BY 
+    DATE(request_ts)
+), 
+T2 AS(
+  SELECT 
+    request_date, 
+    ROUND(
+      AVG(CNT_request) OVER (
+        ORDER BY 
+          request_date ROWS BETWEEN 6 PRECEDING 
+          AND CURRENT ROW
+      ), 
+      2
+    ) AS moving_average_requets, 
+    ROUND(
+      AVG(CNT_accept) OVER (
+        ORDER BY 
+          request_date ROWS BETWEEN 6 PRECEDING 
+          AND CURRENT ROW
+      ), 
+      2
+    ) AS moving_average_accepts, 
+    ROUND(
+      AVG(CNT_distinct_driver) OVER (
+        ORDER BY 
+          request_date ROWS BETWEEN 6 PRECEDING 
+          AND CURRENT ROW
+      ), 
+      2
+    ) AS moving_average_distinct_drivers, 
+    ROUND(
+      AVG(CNT_drivers) OVER (
+        ORDER BY 
+          request_date ROWS BETWEEN 6 PRECEDING 
+          AND CURRENT ROW
+      ), 
+      2
+    ) AS moving_average_drivers 
+  FROM 
+    T1
+) 
+SELECT 
+  request_date, 
+  moving_average_requets, 
+  CASE WHEN lag(moving_average_requets) OVER(
+    ORDER BY 
+      moving_average_requets
+  ) IS NULL 
+  OR lag(moving_average_requets) OVER(
+    ORDER BY 
+      moving_average_requets
+  )= 0 THEN 0 ELSE ROUND(
+    (
+      moving_average_requets - lag(moving_average_requets) OVER(
+        ORDER BY 
+          moving_average_requets
+      )
+    )/ lag(moving_average_requets) OVER(
+      ORDER BY 
+        moving_average_requets
+    ) * 100, 
+    2
+  ) END AS increase_percentage_in_MA_requests, 
+  moving_average_accepts, 
+  CASE WHEN lag(moving_average_accepts) OVER(
+    ORDER BY 
+      moving_average_accepts
+  ) IS NULL 
+  OR lag(moving_average_accepts) OVER(
+    ORDER BY 
+      moving_average_accepts
+  )= 0 THEN 0 ELSE ROUND(
+    (
+      moving_average_accepts - lag(moving_average_accepts) OVER(
+        ORDER BY 
+          moving_average_accepts
+      )
+    )/ lag(moving_average_accepts) OVER(
+      ORDER BY 
+        moving_average_accepts
+    ) * 100, 
+    2
+  ) END AS increase_percentage_in_MA_accepts, 
+  moving_average_distinct_drivers, 
+  CASE WHEN lag(
+    moving_average_distinct_drivers
+  ) OVER(
+    ORDER BY 
+      moving_average_distinct_drivers
+  ) IS NULL 
+  OR lag(
+    moving_average_distinct_drivers
+  ) OVER(
+    ORDER BY 
+      moving_average_distinct_drivers
+  )= 0 THEN 0 ELSE ROUND(
+    (
+      moving_average_distinct_drivers - lag(
+        moving_average_distinct_drivers
+      ) OVER(
+        ORDER BY 
+          moving_average_distinct_drivers
+      )
+    )/ lag(
+      moving_average_distinct_drivers
+    ) OVER(
+      ORDER BY 
+        moving_average_distinct_drivers
+    ) * 100, 
+    2
+  ) END AS increase_percentage_in_MA_distinct_drivers, 
+  moving_average_drivers, 
+  CASE WHEN lag(moving_average_drivers) OVER(
+    ORDER BY 
+      moving_average_drivers
+  ) IS NULL 
+  OR lag(moving_average_drivers) OVER(
+    ORDER BY 
+      moving_average_drivers
+  )= 0 THEN 0 ELSE ROUND(
+    (
+      moving_average_drivers - lag(moving_average_drivers) OVER(
+        ORDER BY 
+          moving_average_drivers
+      )
+    )/ lag(moving_average_drivers) OVER(
+      ORDER BY 
+        moving_average_drivers
+    ) * 100, 
+    2
+  ) END AS increase_percentage_in_MA_drivers 
+FROM 
+  T2;
