@@ -1,0 +1,58 @@
+WITH T1 AS(
+  SELECT 
+    pickup_location, 
+    COUNT(*) accepted_rides 
+  FROM 
+    metrocar 
+  WHERE 
+    EXTRACT(
+      HOUR 
+      FROM 
+        request_ts
+    ) IN(8, 9, 16, 17, 18, 19) 
+    AND EXTRACT(
+      YEAR 
+      FROM 
+        request_ts
+    )= '2021' 
+    AND accept_ts IS NOT NULL 
+  GROUP BY 
+    1 
+  ORDER BY 
+    2 DESC
+), 
+T2 AS (
+  SELECT 
+    pickup_location, 
+    COUNT(*) not_accepted_rides 
+  FROM 
+    metrocar 
+  WHERE 
+    EXTRACT(
+      HOUR 
+      FROM 
+        request_ts
+    ) IN(8, 9, 16, 17, 18, 19) 
+    AND EXTRACT(
+      YEAR 
+      FROM 
+        request_ts
+    )= '2021' 
+    AND accept_ts IS NULL 
+    AND request_ts IS NOT NULL 
+  GROUP BY 
+    1 
+  ORDER BY 
+    2 DESC
+) 
+SELECT 
+  T1.*, 
+  not_accepted_rides, 
+  not_accepted_rides * 100 /(
+    accepted_rides + not_accepted_rides
+  ) AS perc 
+FROM 
+  T1 
+  JOIN T2 ON T1.pickup_location = T2.pickup_location 
+ORDER BY 
+  4 DESC
