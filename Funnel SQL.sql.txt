@@ -1,0 +1,181 @@
+WITH T1 AS (
+  SELECT 
+    1 AS funnel_step, 
+    'total_downloads' AS funnel_name, 
+    COUNT(DISTINCT app_download_key) AS user_count, 
+    platform, 
+    age_range, 
+    Date(download_ts), 
+    SUM (
+      CASE WHEN request_ts IS NOT NULL THEN 1 END
+    ) AS ride_count 
+  FROM 
+    metrocar 
+  WHERE 
+    download_ts IS NOT NULL 
+  GROUP BY 
+    6, 
+    4, 
+    5
+), 
+T2 AS(
+  SELECT 
+    2 AS funnel_step, 
+    'sign_ups' AS funnel_name, 
+    COUNT(DISTINCT user_id) AS user_count, 
+    platform, 
+    age_range, 
+    Date(download_ts), 
+    SUM (
+      CASE WHEN request_ts IS NOT NULL THEN 1 END
+    ) AS ride_count 
+  FROM 
+    metrocar 
+  WHERE 
+    signup_ts IS NOT NULL 
+  GROUP BY 
+    6, 
+    4, 
+    5
+), 
+T3 AS (
+  SELECT 
+    3 AS funnel_step, 
+    'ride_request' AS funnel_name, 
+    COUNT(DISTINCT user_id) AS user_count, 
+    platform, 
+    age_range, 
+    Date(download_ts), 
+    SUM (
+      CASE WHEN request_ts IS NOT NULL THEN 1 END
+    ) AS ride_count 
+  FROM 
+    metrocar 
+  WHERE 
+    request_ts IS NOT NULL 
+  GROUP BY 
+    6, 
+    4, 
+    5
+), 
+T4 AS(
+  SELECT 
+    4 AS funnel_step, 
+    'ride_accepted' AS funnel_name, 
+    COUNT(DISTINCT user_id) AS user_count, 
+    platform, 
+    age_range, 
+    Date(download_ts), 
+    SUM (
+      CASE WHEN request_ts IS NOT NULL THEN 1 END
+    ) AS ride_count 
+  FROM 
+    metrocar 
+  WHERE 
+    ride_id IS NOT NULL 
+    AND accept_ts IS NOT NULL 
+  GROUP BY 
+    6, 
+    4, 
+    5
+), 
+T5 AS(
+  SELECT 
+    5 AS funnel_step, 
+    'ride_completed' AS funnel_name, 
+    COUNT(DISTINCT user_id) AS user_count, 
+    platform, 
+    age_range, 
+    Date(download_ts), 
+    SUM (
+      CASE WHEN request_ts IS NOT NULL THEN 1 END
+    ) AS ride_count 
+  FROM 
+    metrocar 
+  WHERE 
+    dropoff_ts IS NOT NULL 
+  GROUP BY 
+    6, 
+    4, 
+    5
+), 
+T6 AS(
+  SELECT 
+    6 AS funnel_step, 
+    'payment' AS funnel_name, 
+    COUNT(DISTINCT user_id) AS user_count, 
+    platform, 
+    age_range, 
+    Date(download_ts), 
+    SUM (
+      CASE WHEN request_ts IS NOT NULL THEN 1 END
+    ) AS ride_count 
+  FROM 
+    metrocar 
+  WHERE 
+    charge_status = 'Approved' 
+  GROUP BY 
+    6, 
+    4, 
+    5
+), 
+T7 AS (
+  SELECT 
+    6 AS funnel_step, 
+    'review' AS funnel_name, 
+    COUNT(DISTINCT user_id) AS user_count, 
+    platform, 
+    age_range, 
+    Date(download_ts), 
+    SUM (
+      CASE WHEN request_ts IS NOT NULL THEN 1 END
+    ) AS ride_count 
+  FROM 
+    metrocar 
+  WHERE 
+    review_id IS NOT NULL 
+  GROUP BY 
+    6, 
+    4, 
+    5
+), 
+final AS(
+  SELECT 
+    * 
+  FROM 
+    T1 
+  UNION 
+  SELECT 
+    * 
+  FROM 
+    T2 
+  UNION 
+  SELECT 
+    * 
+  FROM 
+    T3 
+  UNION 
+  SELECT 
+    * 
+  FROM 
+    T4 
+  UNION 
+  SELECT 
+    * 
+  FROM 
+    T5 
+  UNION 
+  SELECT 
+    * 
+  FROM 
+    T6 
+  UNION 
+  SELECT 
+    * 
+  FROM 
+    T7
+) 
+SELECT 
+  * 
+FROM 
+  final
