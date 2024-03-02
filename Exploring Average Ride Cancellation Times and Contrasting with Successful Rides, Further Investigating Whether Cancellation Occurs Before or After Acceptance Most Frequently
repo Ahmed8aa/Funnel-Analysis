@@ -1,0 +1,79 @@
+--/Exploring Average Ride Cancellation Times and Contrasting with Successful Rides, Further Investigating Whether Cancellation Occurs Before or After Acceptance Most Frequently/--
+
+-- SELECT EXTRACT (hour FROM request_ts) AS hour,COUNT(*)
+-- FROM ride_requests
+-- WHERE 
+-- SELECT * FROM ride_requests WHERE cancel_ts IS NOT NULL
+-- cancel avg time
+WITH T1 AS(
+  SELECT 
+    ROUND(
+      AVG(
+        EXTRACT (
+          MINUTE 
+          FROM 
+            (accept_ts - request_ts)
+        )
+      )
+    ) AS acceptance_avg_time_for_cancelled_rides 
+  FROM 
+    ride_requests 
+  WHERE 
+    cancel_ts IS NOT NULL
+), 
+T2 AS -- accept avg time
+(
+  SELECT 
+    ROUND(
+      AVG(
+        EXTRACT (
+          MINUTE 
+          FROM 
+            (accept_ts - request_ts)
+        )
+      )
+    ) AS avg_acceptance_time_for_succeful_rides 
+  FROM 
+    ride_requests 
+  WHERE 
+    cancel_ts IS NULL
+), 
+T3 AS (
+  SELECT 
+    ROUND(
+      AVG(
+        EXTRACT (
+          MINUTE 
+          FROM 
+            (cancel_ts - request_ts)
+        )
+      )
+    ) AS canceled_rides_avg_time_when_rides_not_accepted 
+  FROM 
+    ride_requests 
+  WHERE 
+    accept_ts IS NULL
+) 
+SELECT 
+  * 
+FROM 
+  T1, 
+  T3, 
+  T2;
+-- most of cancellation due to lack of acceptance
+SELECT 
+  COUNT(*) AS cancellation_after_acceptance, 
+  (
+    SELECT 
+      COUNT(*) 
+    FROM 
+      ride_requests 
+    WHERE 
+      cancel_ts IS NOT NULL 
+      AND accept_ts IS NULL
+  ) AS cancellation_before_acceptance 
+FROM 
+  ride_requests 
+WHERE 
+  cancel_ts IS NOT NULL 
+  AND accept_ts IS NOT NULL;
