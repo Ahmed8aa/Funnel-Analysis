@@ -255,6 +255,10 @@ T8 AS(
 ) 
 SELECT 
   T8.*, 
+  CASE WHEN gross_profit = 0 THEN 0 ELSE ROUND(
+    potential_gross_profit_increase / gross_profit, 
+    2
+  ) * 100 END AS potential_gross_profit_percentage, 
   increase_percentage_in_MA_accepts AS Weekly_growth_percentage_in_accepted_rides, 
   increase_percentage_in_MA_distinct_drivers AS Weekly_growth_percentage_in_drivers, 
   CASE WHEN lag(gross_profit) OVER()= 0 
@@ -265,4 +269,5 @@ SELECT
     2
   ) * 100 END AS weekley_growth_percentage_in_gross_profit 
 FROM 
-  T8
+  T8 --/sad/--
+
