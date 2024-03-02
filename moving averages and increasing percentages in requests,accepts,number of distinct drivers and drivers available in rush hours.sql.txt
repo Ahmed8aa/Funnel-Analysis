@@ -2,7 +2,7 @@
 profit improvement. It calculates various performance metrics such as ride requests, driver availability, average fares, and profitability trends specifically during peak
 hours. Using advanced SQL techniques such as window functions and conditional logic, it offers valuable insights into operational efficiency, driver utilization, and 
 revenue generation during critical periods. The analysis is indispensable for identifying opportunities for business expansion and optimizing profitability in the ride-
-sharing industry.
+sharing industry./--
 
 
 WITH T1 AS (
