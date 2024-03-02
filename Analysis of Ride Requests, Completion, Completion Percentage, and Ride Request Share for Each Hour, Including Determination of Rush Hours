@@ -1,0 +1,49 @@
+--/ Analysis of Ride Requests, Completion, Completion Percentage, and Ride Request Share for Each Hour, Including Determination of Rush Hours/--
+
+WITH T1 AS(
+  SELECT 
+    EXTRACT(
+      HOUR 
+      FROM 
+        request_ts
+    ) AS hour, 
+    COUNT(*) AS total_ride_requests 
+  FROM 
+    ride_requests 
+  GROUP BY 
+    1
+), 
+T2 AS (
+  SELECT 
+    EXTRACT(
+      HOUR 
+      FROM 
+        request_ts
+    ) AS hour, 
+    COUNT(*) AS total_ride_completed 
+  FROM 
+    ride_requests 
+  WHERE 
+    dropoff_ts IS NOT NULL 
+  GROUP BY 
+    1
+) 
+SELECT 
+  T1.*, 
+  total_ride_completed, 
+  ROUND(
+    (
+      total_ride_completed :: float / total_ride_requests * 100
+    ):: INT, 
+    2
+  ) AS ride_complete_percentage, 
+  ROUND(
+    total_ride_requests / SUM(total_ride_requests) OVER () * 100, 
+    2
+  ) AS ride_request_share 
+FROM 
+  T1 
+  JOIN T2 ON T1.hour = T2.hour 
+ORDER BY 
+  total_ride_completed DESC 
+--/ rush_hours_8,9,16,17,18,19 They represent 80 percent of total ride requests/--
